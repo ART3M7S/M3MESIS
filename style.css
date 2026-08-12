@@ -1,0 +1,87 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: #000;
+  overflow: hidden;
+  color: #fff;
+}
+
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#video, #canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* modo espelho */
+}
+
+#canvas {
+  pointer-events: none;
+}
+
+.hud {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+  text-shadow: 0 0 10px #00f2ff;
+}
+
+.hud h1 {
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  color: #00f2ff;
+}
+
+#humor {
+  font-size: 1rem;
+  margin-top: 5px;
+  background: rgba(0,0,0,0.5);
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+}
+
+#menu {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  overflow-x: auto;
+  z-index: 10;
+}
+
+.filtro-btn {
+  background: rgba(0, 242, 255, 0.2);
+  border: 1px solid #00f2ff;
+  color: #00f2ff;
+  padding: 10px 15px;
+  border-radius: 15px;
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(5px);
+  transition: 0.2s;
+}
+
+.filtro-btn:active {
+  background: #00f2ff;
+  color: #000;
+  }

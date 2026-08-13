@@ -50,7 +50,7 @@ faceMesh.setOptions({
 const PONTOS_CHAVE = [
  70, 63, 105, 107, 336, 296, 300, // sobrancelha
   33, 133, 159, 145, 362, 263, 386, 374, // olho
-  61, 291, 13, 14, 0, // boca
+ 61, 291, 13, 14, 0, // boca
  468, 473 // pupila
 ];
 
@@ -59,7 +59,6 @@ function dist(p1, p2) {
 }
 
 function detectarHumor(l) {
-  // NORMALIZA tudo pela distância entre os olhos. Assim funciona em qualquer celular
   const olhoDistancia = dist(l[33], l[263]); 
   
   const bocaLargura = dist(l[61], l[291]) / olhoDistancia;
@@ -71,43 +70,27 @@ function detectarHumor(l) {
   const bocaCantoY = (l[61].y + l[291].y) / 2;
   const bocaCentroY = (l[13].y + l[14].y) / 2;
 
-  // REGRAS CALIBRADAS - Ordem importa!
-
-  // 1. MEDO/SUSTO: Olho BEM aberto + Boca aberta + Sobrancelha lá em cima
   if (olhoAbertura > 0.25 && bocaAbertura > 0.18 && sobrancelhaAltura > 0.9) {
     return `Medo/Susto 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 2. SURPRESA: Olho aberto + Boca em O
   if (olhoAbertura > 0.22 && bocaAbertura > 0.15 && bocaLargura < 0.45) {
     return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 3. FELIZ: Boca larga + cantos pra cima
   if (bocaLargura > 0.5 && bocaCentroY > bocaCantoY) {
     return `Feliz 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 4. TRISTE: Boca pra baixo + olho semi-fechado
   if (bocaLargura < 0.4 && bocaCentroY < bocaCantoY && olhoAbertura < 0.18) {
     return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 5. BRAVO: Sobrancelha franzida + boca tensa
   if (sobrancelhaAltura < 0.65 && bocaLargura < 0.45) {
     return `Bravo 😠 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 6. CANSADO: Olho muito fechado
   if (olhoAbertura < 0.12) {
     return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
-  // 7. NOJO: Boca torta
   if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.08) {
     return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
-
   return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 }
 
@@ -116,7 +99,6 @@ faceMesh.onResults(results => {
 
   if (results.multiFaceLandmarks) {
     for (const l of results.multiFaceLandmarks) {
-      // Desenha pontos
       ctx.fillStyle = '#00f2ff';
       PONTOS_CHAVE.forEach(i => {
         if(l[i]) {
@@ -127,7 +109,6 @@ faceMesh.onResults(results => {
         }
       });
 
-      // Linhas guia
       ctx.strokeStyle = '#ff00ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -136,7 +117,7 @@ faceMesh.onResults(results => {
       ctx.stroke();
 
       frameCount++;
-      if (frameCount % 4 === 0) { // mais responsivo
+      if (frameCount % 4 === 0) {
         const humor = detectarHumor(l);
         if (humor !== lastHumor) {
           humorDiv.innerText = `Humor: ${humor}`;

@@ -4,8 +4,8 @@ const ctx = canvas.getContext('2d');
 const humorDiv = document.getElementById('humor');
 const botoes = document.querySelectorAll('.filtro-btn');
 const btnEfeitos = document.getElementById('btnEfeitos');
-const btnTrocarCamera = document.getElementById('btnTrocarCamera');
 const menuEfeitos = document.getElementById('menuEfeitos');
+const painelInfo = document.getElementById('painelInfo');
 
 const tomPeleSpan = document.getElementById('tomPele');
 const idadeSpan = document.getElementById('idade');
@@ -16,7 +16,6 @@ let filtroAtual = 'none';
 let lastHumor = "";
 let frameCount = 0;
 let menuAberto = false;
-let usandoCameraFrontal = true;
 let cameraStream = null;
 let faceCamera = null;
 
@@ -46,23 +45,11 @@ botoes.forEach(btn => {
   });
 });
 
-btnTrocarCamera.addEventListener('click', () => {
-  usandoCameraFrontal =!usandoCameraFrontal;
-  iniciarCamera();
-  if(usandoCameraFrontal) {
-    video.style.transform = 'scaleX(-1)';
-    canvas.style.transform = 'scaleX(-1)';
-  } else {
-    video.style.transform = 'scaleX(1)';
-    canvas.style.transform = 'scaleX(1)';
-  }
-});
-
 async function iniciarCamera() {
   if(cameraStream) cameraStream.getTracks().forEach(track => track.stop());
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: usandoCameraFrontal? "user" : "environment", width: 640, height: 480 }
+      video: { facingMode: "user", width: 640, height: 480 }
     });
     video.srcObject = cameraStream;
     humorDiv.innerText = "Humor: Detectando...";
@@ -103,7 +90,9 @@ function detectarHumor(l) {
   const pupilaTamanho = (dist(l[468], l[159]) + dist(l[473], l[386])) / 2 / olhoDistancia;
   const bocaCantoY = (l[61].y + l[291].y) / 2;
   const bocaCentroY = (l[13].y + l[14].y) / 2;
+  const sobrancelhaInclinacao = Math.abs(l[70].y - l[300].y);
 
+  // ========== SISTEMA DE HUMOR PRECISO ==========
   let nivelRaiva = 0;
   if (sobrancelhaAltura < 0.65) nivelRaiva += 1;
   if (sobrancelhaDistancia < 0.35) nivelRaiva += 1;
@@ -113,12 +102,24 @@ function detectarHumor(l) {
   if (nivelRaiva >= 3) return `RAIVA 😡 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   if (nivelRaiva === 2) return `Raiva Moderada 😠 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 
-  if (olhoAbertura > 0.25 && bocaAbertura > 0.18 && sobrancelhaAltura > 0.9) return `Medo/Susto 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (olhoAbertura > 0.22 && bocaAbertura > 0.15 && bocaLargura < 0.45) return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (bocaLargura > 0.5 && bocaCentroY > bocaCantoY) return `Feliz 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (bocaLargura < 0.4 && bocaCentroY < bocaCantoY && olhoAbertura < 0.18) return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (olhoAbertura < 0.12) return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.08) return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+  // ALEGRE: Boca larga p cima
+  if (bocaLargura > 0.55 && bocaCentroY > bocaCantoY + 0.01) return `Alegre 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  // TRISTE: Boca fina p baixo
+  if (bocaLargura < 0.42 && bocaCentroY < bocaCantoY - 0.01 && olhoAbertura < 0.19) return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  // SURPRESO: Olho e boca abertos
+  if (olhoAbertura > 0.22 && bocaAbertura > 0.14) return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  // MEDO: Olho aberto + sobrancelha alta
+  if (olhoAbertura > 0.24 && sobrancelhaAltura > 0.9) return `Medo 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  // NOJO: Boca torta/nariz franzido
+  if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.09 || sobrancelhaInclinacao > 0.02) return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  // CANSADO: Olho fechado
+  if (olhoAbertura < 0.13) return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
   return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 }
 
@@ -161,6 +162,7 @@ video.onloadedmetadata = () => {
 }
 iniciarCamera();
 
+// FUNÇÃO ARRASTAR PRA BOTÃO E PAINEL
 function tornarArrastavel(elemento) {
   let offsetX, offsetY, isDragging = false;
   const start = (e) => {
@@ -180,6 +182,7 @@ function tornarArrastavel(elemento) {
     elemento.style.right = 'auto';
     elemento.style.top = y + 'px';
     elemento.style.bottom = 'auto';
+    elemento.style.transform = 'none';
   }
   const end = () => { isDragging = false; elemento.style.cursor = 'grab'; }
   elemento.addEventListener('mousedown', start);
@@ -191,4 +194,4 @@ function tornarArrastavel(elemento) {
 }
 
 tornarArrastavel(btnEfeitos);
-tornarArrastavel(btnTrocarCamera);
+tornarArrastavel(painelInfo); // PAINEL AGORA É ARRASTÁVEL

@@ -24,7 +24,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1); /* modo espelho */
+  transform: scaleX(-1);
 }
 
 #canvas {
@@ -67,34 +67,88 @@ body {
   padding: 5px 15px;
   border-radius: 20px;
   backdrop-filter: blur(5px);
+  min-width: 200px;
 }
 
-#menu {
+/* BOTÕES FLUTUANTES */
+#btnEfeitos, #btnTrocarCamera {
   position: absolute;
   bottom: 20px;
-  left: 0;
-  width: 100%;
+  background: rgba(0, 242, 255, 0.2);
+  border: 2px solid #00f2ff;
+  color: #00f2ff;
+  padding: 12px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 1px;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+  transition: 0.3s;
+  box-shadow: 0 0 15px #00f2ff;
+  font-size: 0.8rem;
+}
+
+#btnEfeitos {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#btnTrocarCamera {
+  right: 20px;
+}
+
+#btnEfeitos:active, #btnTrocarCamera:active {
+  background: #00f2ff;
+  color: #000;
+}
+
+/* MENU FLUTUANTE */
+#menuEfeitos {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(15px);
+  border: 1px solid #00f2ff;
+  border-radius: 20px;
+  padding: 15px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   gap: 10px;
-  padding: 10px;
-  overflow-x: auto;
-  z-index: 10;
+  z-index: 19;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px #00f2ff;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.menu-fechado {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(20px);
+}
+
+.menu-aberto {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0);
 }
 
 .filtro-btn {
-  background: rgba(0, 242, 255, 0.2);
+  background: rgba(0, 242, 255, 0.1);
   border: 1px solid #00f2ff;
   color: #00f2ff;
-  padding: 10px 15px;
+  padding: 10px 20px;
   border-radius: 15px;
   cursor: pointer;
   white-space: nowrap;
-  backdrop-filter: blur(5px);
   transition: 0.2s;
+  font-size: 0.9rem;
 }
 
 .filtro-btn:active {
   background: #00f2ff;
   color: #000;
-    }
+                        }

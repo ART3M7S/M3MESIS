@@ -15,6 +15,7 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom); /* pra iPhone/Android */
 }
 
 #video, #canvas {
@@ -70,46 +71,48 @@ body {
   min-width: 200px;
 }
 
-/* BOTÕES FLUTUANTES */
+/* BOTÕES FLUTUANTES ARRASTÁVEIS */
 #btnEfeitos, #btnTrocarCamera {
-  position: absolute;
-  bottom: 20px;
+  position: absolute; /* mudei de fixed pra absolute */
   background: rgba(0, 242, 255, 0.2);
   border: 2px solid #00f2ff;
   color: #00f2ff;
   padding: 12px 20px;
   border-radius: 30px;
-  cursor: pointer;
+  cursor: grab;
   font-weight: bold;
   letter-spacing: 1px;
   backdrop-filter: blur(10px);
-  z-index: 20;
-  transition: 0.3s;
+  z-index: 50; /* Z-INDEX ALTO */
+  transition: 0.1s;
   box-shadow: 0 0 15px #00f2ff;
   font-size: 0.8rem;
+  touch-action: none; /* pra arrastar no celular */
+  user-select: none;
 }
 
 #btnEfeitos {
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 100px; /* SUBI 80px pra fugir da barra */
+  right: 20px;
 }
 
 #btnTrocarCamera {
-  right: 20px;
+  bottom: 100px; /* SUBI 80px */
+  left: 20px;
 }
 
 #btnEfeitos:active, #btnTrocarCamera:active {
   background: #00f2ff;
   color: #000;
+  cursor: grabbing;
 }
 
 /* MENU FLUTUANTE */
 #menuEfeitos {
   position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
+  bottom: 160px; /* SUBI TAMBÉM */
+  right: 20px;
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(15px);
   border: 1px solid #00f2ff;
   border-radius: 20px;
@@ -117,38 +120,40 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 19;
+  z-index: 49;
   transition: all 0.3s ease;
   box-shadow: 0 0 20px #00f2ff;
-  max-height: 60vh;
+  max-height: 50vh;
   overflow-y: auto;
+  width: 160px;
 }
 
 .menu-fechado {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateY(20px) scale(0.9);
 }
 
 .menu-aberto {
   opacity: 1;
   pointer-events: all;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .filtro-btn {
   background: rgba(0, 242, 255, 0.1);
   border: 1px solid #00f2ff;
   color: #00f2ff;
-  padding: 10px 20px;
+  padding: 10px 15px;
   border-radius: 15px;
   cursor: pointer;
   white-space: nowrap;
   transition: 0.2s;
   font-size: 0.9rem;
+  text-align: center;
 }
 
 .filtro-btn:active {
   background: #00f2ff;
   color: #000;
-                        }
+}

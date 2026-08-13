@@ -71,35 +71,37 @@ body {
   min-width: 200px;
 }
 
-/* PAINEL LATERAL TRANSPARENTE */
+/* PAINEL LATERAL SEM CONTORNO */
 #painelInfo {
   position: absolute;
   top: 50%;
   right: 20px;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  border: 1px solid #ff0033;
-  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.25); /* mais transparente */
+  backdrop-filter: blur(8px);
+  border: none; /* REMOVI A BORDA */
+  border-radius: 0; /* REMOVI O RAIO */
   padding: 15px;
   width: 220px;
   z-index: 30;
-  box-shadow: 0 0 20px #ff0033;
+  box-shadow: none; /* REMOVI O GLOW */
   text-align: left;
 }
 
 #painelInfo h3 {
   color: #ff0033;
-  text-align: center;
+  text-align: left; /* alinhado a esquerda agora */
   margin-bottom: 10px;
   letter-spacing: 2px;
   font-size: 1rem;
+  text-shadow: 0 0 8px #ff0033;
 }
 
 #painelInfo p {
   font-size: 0.9rem;
   margin: 8px 0;
   color: #fff;
+  text-shadow: 0 0 5px #000; /* sombra pra ler melhor */
 }
 
 #painelInfo span {
@@ -192,4 +194,4 @@ body {
 .filtro-btn:active {
   background: #ff0033;
   color: #000;
-}
+  }

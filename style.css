@@ -71,46 +71,54 @@ body {
   min-width: 200px;
 }
 
-/* PAINEL LATERAL SEM CONTORNO */
+/* PAINEL LATERAL 100% TRANSPARENTE - SEM FUNDO E SEM BLUR */
 #painelInfo {
   position: absolute;
   top: 50%;
   right: 20px;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.25); /* mais transparente */
-  backdrop-filter: blur(8px);
-  border: none; /* REMOVI A BORDA */
-  border-radius: 0; /* REMOVI O RAIO */
-  padding: 15px;
-  width: 220px;
+  background: transparent; /* SEM FUNDO NENHUM */
+  backdrop-filter: none; /* SEM DESFOQUE */
+  border: none; /* SEM BORDA */
+  border-radius: 0;
+  padding: 0; /* SEM CAIXA */
+  width: auto; /* LARGURA AUTOMÁTICA */
   z-index: 30;
-  box-shadow: none; /* REMOVI O GLOW */
+  box-shadow: none;
   text-align: left;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+#painelInfo:active {
+  cursor: grabbing;
 }
 
 #painelInfo h3 {
   color: #ff0033;
-  text-align: left; /* alinhado a esquerda agora */
+  text-align: left;
   margin-bottom: 10px;
   letter-spacing: 2px;
   font-size: 1rem;
-  text-shadow: 0 0 8px #ff0033;
+  text-shadow: 0 0 8px #000, 0 0 8px #000; /* CONTORNO PRA LER */
 }
 
 #painelInfo p {
   font-size: 0.9rem;
   margin: 8px 0;
   color: #fff;
-  text-shadow: 0 0 5px #000; /* sombra pra ler melhor */
+  text-shadow: 0 0 8px #000, 0 0 8px #000; /* CONTORNO PRETO FORTE */
 }
 
 #painelInfo span {
   color: #ff0033;
   font-weight: bold;
+  text-shadow: 0 0 8px #000, 0 0 8px #000;
 }
 
-/* BOTÕES VERMELHOS */
-#btnEfeitos, #btnTrocarCamera {
+/* SÓ 1 BOTÃO - EFEITOS */
+#btnEfeitos {
   position: absolute;
   background: rgba(255, 0, 51, 0.2);
   border: 2px solid #ff0033;
@@ -127,19 +135,11 @@ body {
   font-size: 0.8rem;
   touch-action: none;
   user-select: none;
-}
-
-#btnEfeitos {
   bottom: 100px;
   right: 20px;
 }
 
-#btnTrocarCamera {
-  bottom: 100px;
-  left: 20px;
-}
-
-#btnEfeitos:active, #btnTrocarCamera:active {
+#btnEfeitos:active {
   background: #ff0033;
   color: #000;
   cursor: grabbing;

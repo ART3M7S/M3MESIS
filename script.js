@@ -42,122 +42,103 @@ const faceMesh = new FaceMesh({
 
 faceMesh.setOptions({
   maxNumFaces: 1,
-  refineLandmarks: true, // Liga íris pra tentar pegar pupila
+  refineLandmarks: true,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });
 
-// Pontos chave expandidos
 const PONTOS_CHAVE = [
-  // Sobrancelhas
-  70, 63, 105, 66, 107, 336, 296, 334, 293, 300,
-  // Olhos
-  33, 133, 159, 145, 362, 263, 386, 374,
-  // Boca
- 61, 291, 13, 14, 17, 0, 40, 270,
-  // Íris / Pupila
- 468, 469, 470, 471, 472, 473, 474, 475, 476, 477
+ 70, 63, 105, 107, 336, 296, 300, // sobrancelha
+  33, 133, 159, 145, 362, 263, 386, 374, // olho
+  61, 291, 13, 14, 0, // boca
+ 468, 473 // pupila
 ];
 
-function calcularDistancia(p1, p2) {
+function dist(p1, p2) {
   return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
 }
 
-function detectarHumor(landmarks) {
-  // Medidas principais
-  const bocaLargura = calcularDistancia(landmarks[61], landmarks[291]);
-  const bocaAbertura = calcularDistancia(landmarks[13], landmarks[14]);
-  const olhoEsqAbertura = calcularDistancia(landmarks[159], landmarks[145]);
-  const olhoDirAbertura = calcularDistancia(landmarks[386], landmarks[374]);
-  const olhoAberturaMedia = (olhoEsqAbertura + olhoDirAbertura) / 2;
+function detectarHumor(l) {
+  // NORMALIZA tudo pela distância entre os olhos. Assim funciona em qualquer celular
+  const olhoDistancia = dist(l[33], l[263]); 
+  
+  const bocaLargura = dist(l[61], l[291]) / olhoDistancia;
+  const bocaAbertura = dist(l[13], l[14]) / olhoDistancia;
+  const olhoAbertura = (dist(l[159], l[145]) + dist(l[386], l[374])) / 2 / olhoDistancia;
+  const sobrancelhaAltura = (dist(l[70], l[159]) + dist(l[300], l[386])) / 2 / olhoDistancia;
+  const pupilaTamanho = (dist(l[468], l[159]) + dist(l[473], l[386])) / 2 / olhoDistancia;
+  
+  const bocaCantoY = (l[61].y + l[291].y) / 2;
+  const bocaCentroY = (l[13].y + l[14].y) / 2;
 
-  const sobrancelhaEsqAltura = calcularDistancia(landmarks[70], landmarks[159]);
-  const sobrancelhaDirAltura = calcularDistancia(landmarks[336], landmarks[386]);
-  const sobrancelhaMedia = (sobrancelhaEsqAltura + sobrancelhaDirAltura) / 2;
+  // REGRAS CALIBRADAS - Ordem importa!
 
-  // Pupila - usa o ponto central da íris
-  const pupilaEsq = landmarks[468];
-  const pupilaDir = landmarks[473];
-  const tamanhoPupila = (calcularDistancia(pupilaEsq, landmarks[159]) + calcularDistancia(pupilaDir, landmarks[386])) / 2;
-
-  // 1. MEDO / SUSTO: Olho muito aberto + boca aberta + pupila dilatada + sobrancelha alta
-  if (olhoAberturaMedia > 0.025 && bocaAbertura > 0.025 && sobrancelhaMedia > 0.06) {
-    return `Medo/Susto 😱 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  // 1. MEDO/SUSTO: Olho BEM aberto + Boca aberta + Sobrancelha lá em cima
+  if (olhoAbertura > 0.25 && bocaAbertura > 0.18 && sobrancelhaAltura > 0.9) {
+    return `Medo/Susto 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
-  // 2. SURPRESA: Olho aberto + boca aberta em "O" + sobrancelha alta
-  if (olhoAberturaMedia > 0.022 && bocaAbertura > 0.03 && bocaLargura < 0.08) {
-    return `Surpreso 😲 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  // 2. SURPRESA: Olho aberto + Boca em O
+  if (olhoAbertura > 0.22 && bocaAbertura > 0.15 && bocaLargura < 0.45) {
+    return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
-  // 3. FELIZ: Boca larga + olho normal
-  if (bocaLargura > 0.09 && bocaAbertura > 0.01) {
-    return `Feliz 😄 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  // 3. FELIZ: Boca larga + cantos pra cima
+  if (bocaLargura > 0.5 && bocaCentroY > bocaCantoY) {
+    return `Feliz 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
   // 4. TRISTE: Boca pra baixo + olho semi-fechado
-  if (bocaLargura < 0.06 && landmarks[14].y > landmarks[13].y + 0.01) {
-    return `Triste 😔 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  if (bocaLargura < 0.4 && bocaCentroY < bocaCantoY && olhoAbertura < 0.18) {
+    return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
-  // 5. BRAVO: Sobrancelha baixa + boca tensa
-  if (sobrancelhaMedia < 0.03 && bocaLargura < 0.07) {
-    return `Bravo 😠 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  // 5. BRAVO: Sobrancelha franzida + boca tensa
+  if (sobrancelhaAltura < 0.65 && bocaLargura < 0.45) {
+    return `Bravo 😠 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
   // 6. CANSADO: Olho muito fechado
-  if (olhoAberturaMedia < 0.012) {
-    return `Cansado 😮‍💨 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  if (olhoAbertura < 0.12) {
+    return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
-  // 7. NOJO: Nariz franzido = boca torta
-  if (Math.abs(landmarks[61].y - landmarks[291].y) > 0.015) {
-    return `Nojo 🤢 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  // 7. NOJO: Boca torta
+  if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.08) {
+    return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   }
 
-  return `Neutro 😐 Pupila: ${(tamanhoPupila*1000).toFixed(1)}`;
+  return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 }
 
 faceMesh.onResults(results => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (results.multiFaceLandmarks) {
-    for (const landmarks of results.multiFaceLandmarks) {
+    for (const l of results.multiFaceLandmarks) {
       // Desenha pontos
       ctx.fillStyle = '#00f2ff';
       PONTOS_CHAVE.forEach(i => {
-        if(landmarks[i]) {
-          const p = landmarks[i];
+        if(l[i]) {
+          const p = l[i];
           ctx.beginPath();
-          ctx.arc(p.x * canvas.width, p.y * canvas.height, i >= 468? 2 : 3, 0, 2 * Math.PI); // pupila menor
+          ctx.arc(p.x * canvas.width, p.y * canvas.height, i >= 468? 2 : 3, 0, 2 * Math.PI);
           ctx.fill();
         }
       });
 
-      // Desenha linhas principais
+      // Linhas guia
       ctx.strokeStyle = '#ff00ff';
       ctx.lineWidth = 2;
-
-      // Boca
       ctx.beginPath();
-      ctx.moveTo(landmarks[61].x * canvas.width, landmarks[61].y * canvas.height);
-      ctx.lineTo(landmarks[291].x * canvas.width, landmarks[291].y * canvas.height);
-      ctx.stroke();
-
-      // Olhos
-      ctx.beginPath();
-      ctx.moveTo(landmarks[33].x * canvas.width, landmarks[33].y * canvas.height);
-      ctx.lineTo(landmarks[133].x * canvas.width, landmarks[133].y * canvas.height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(landmarks[362].x * canvas.width, landmarks[362].y * canvas.height);
-      ctx.lineTo(landmarks[263].x * canvas.width, landmarks[263].y * canvas.height);
+      ctx.moveTo(l[61].x * canvas.width, l[61].y * canvas.height);
+      ctx.lineTo(l[291].x * canvas.width, l[291].y * canvas.height);
       ctx.stroke();
 
       frameCount++;
-      if (frameCount % 6 === 0) { // mais leve ainda
-        const humor = detectarHumor(landmarks);
-        if (humor!== lastHumor) {
+      if (frameCount % 4 === 0) { // mais responsivo
+        const humor = detectarHumor(l);
+        if (humor !== lastHumor) {
           humorDiv.innerText = `Humor: ${humor}`;
           lastHumor = humor;
         }
@@ -168,11 +149,8 @@ faceMesh.onResults(results => {
 
 video.onloadedmetadata = () => {
   const camera = new Camera(video, {
-    onFrame: async () => {
-      await faceMesh.send({image: video});
-    },
-    width: 640,
-    height: 480
+    onFrame: async () => { await faceMesh.send({image: video}); },
+    width: 640, height: 480
   });
   camera.start();
 }

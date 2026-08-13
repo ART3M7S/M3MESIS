@@ -66,23 +66,18 @@ faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfide
 const PONTOS_CHAVE = [70, 63, 105, 107, 334, 336, 296, 300, 33, 133, 159, 145, 362, 263, 386, 374, 61, 291, 13, 14, 0, 468, 473, 10, 67, 152, 200, 58, 288];
 function dist(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
 
-// ========== BIOMETRIA ATUALIZADA ==========
+// ========== BIOMETRIA ==========
 function atualizarBiometria(l) {
-  // 1. Tom de pele
   tomPeleSpan.innerText = "Claro/Médio";
-
-  // 2. IDADE APROXIMADA - SISTEMA 3 PONTOS
-  const olhoSobrancelha = dist(l[159], l[70]); // olho caído
-  const testaRugas = dist(l[10], l[67]); // testa
-  const flacidezMandibula = dist(l[152], l[200]); // queixo
+  const olhoSobrancelha = dist(l[159], l[70]);
+  const testaRugas = dist(l[10], l[67]);
+  const flacidezMandibula = dist(l[152], l[200]);
 
   let pontosIdade = 0;
   if(testaRugas > 0.12) pontosIdade += 2;
   else if(testaRugas > 0.10) pontosIdade += 1;
-
   if(olhoSobrancelha < 0.045) pontosIdade += 2;
   else if(olhoSobrancelha < 0.06) pontosIdade += 1;
-
   if(flacidezMandibula > 0.15) pontosIdade += 2;
   else if(flacidezMandibula > 0.12) pontosIdade += 1;
 
@@ -91,16 +86,14 @@ function atualizarBiometria(l) {
   else if(pontosIdade >= 1) idadeSpan.innerText = "22-29";
   else idadeSpan.innerText = "16-21";
 
-  // 3. Cor dos olhos
   const cores = ["Castanho", "Preto", "Mel", "Verde"];
   corOlhosSpan.innerText = cores[Math.floor(Math.random() * cores.length)];
 
-  // 4. Sexo
   const larguraMandibula = dist(l[58], l[288]);
   sexoSpan.innerText = larguraMandibula > 0.16? "Masculino" : "Feminino";
 }
 
-// ========== HUMOR PRECISO 7 TIPOS ==========
+// ========== HUMOR COM NEUTRO ==========
 function detectarHumor(l) {
   const olhoDistancia = dist(l[33], l[263]);
   const bocaLargura = dist(l[61], l[291]) / olhoDistancia;
@@ -113,25 +106,66 @@ function detectarHumor(l) {
   const pupilaTamanho = (dist(l[468], l[159]) + dist(l[473], l[386])) / 2 / olhoDistancia;
   const bocaCantoY = (l[61].y + l[291].y) / 2;
   const bocaCentroY = (l[13].y + l[14].y) / 2;
-  const sobrancelhaInclinacao = Math.abs(l[70].y - l[300].y);
+  const curvaturaBoca = bocaCentroY - bocaCantoY;
 
-  let nivelRaiva = 0;
-  if (sobrancelhaAltura < 0.65) nivelRaiva += 1;
-  if (sobrancelhaDistancia < 0.35) nivelRaiva += 1;
-  if (bocaLargura < 0.45 && bocaAbertura < 0.05) nivelRaiva += 1;
-  if (pupilaTamanho < 0.12) nivelRaiva += 1;
+  let pontosAlegria = 0;
+  let pontosTristeza = 0;
+  let pontosSurpresa = 0;
+  let pontosRaiva = 0;
+  let pontosNojo = 0;
+  let pontosMedo = 0;
+  let pontosCansado = 0;
 
-  if (nivelRaiva >= 3) return `RAIVA 😡 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (nivelRaiva === 2) return `Raiva Moderada 😠 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+  // ALEGRE
+  if(bocaLargura > 0.52) pontosAlegria += 2;
+  if(curvaturaBoca > 0.015) pontosAlegria += 2;
+  if(olhoAbertura > 0.16 && olhoAbertura < 0.22) pontosAlegria += 1;
 
-  if (bocaLargura > 0.55 && bocaCentroY > bocaCantoY + 0.01) return `Alegre 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (bocaLargura < 0.42 && bocaCentroY < bocaCantoY - 0.01 && olhoAbertura < 0.19) return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (olhoAbertura > 0.22 && bocaAbertura > 0.14) return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (olhoAbertura > 0.24 && sobrancelhaAltura > 0.9) return `Medo 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.09 || sobrancelhaInclinacao > 0.02) return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-  if (olhoAbertura < 0.13) return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+  // TRISTE
+  if(bocaLargura < 0.44) pontosTristeza += 1;
+  if(curvaturaBoca < -0.015) pontosTristeza += 2;
+  if(olhoAbertura < 0.17) pontosTristeza += 1;
 
-  return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+  // SURPRESO
+  if(bocaAbertura > 0.12) pontosSurpresa += 2;
+  if(olhoAbertura > 0.21) pontosSurpresa += 2;
+
+  // MEDO
+  if(olhoAbertura > 0.23) pontosMedo += 2;
+  if(sobrancelhaAltura > 0.85) pontosMedo += 1;
+
+  // RAIVA - MAIS DIFÍCIL
+  if(sobrancelhaAltura < 0.62) pontosRaiva += 1;
+  if(sobrancelhaDistancia < 0.33) pontosRaiva += 1;
+  if(bocaLargura < 0.44 && bocaAbertura < 0.04) pontosRaiva += 1;
+  if(pupilaTamanho < 0.11) pontosRaiva += 1;
+
+  // NOJO
+  if(Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.08) pontosNojo += 2;
+
+  // CANSADO
+  if(olhoAbertura < 0.13) pontosCansado += 3;
+
+  const humores = [
+    {nome: `Alegre 😄`, pontos: pontosAlegria},
+    {nome: `Triste 😔`, pontos: pontosTristeza},
+    {nome: `Surpreso 😲`, pontos: pontosSurpresa},
+    {nome: `Medo 😱`, pontos: pontosMedo},
+    {nome: `Nojo 🤢`, pontos: pontosNojo},
+    {nome: `Cansado 😮‍💨`, pontos: pontosCansado},
+    {nome: `RAIVA 😡`, pontos: pontosRaiva},
+    {nome: `Raiva Moderada 😠`, pontos: pontosRaiva - 1}
+  ];
+
+  humores.sort((a,b) => b.pontos - a.pontos);
+  let vencedor = humores[0];
+
+  // REGRA DO NEUTRO: Se ninguém tem 2 pontos, é neutro
+  // E Raiva só vale com 3 pontos
+  if(vencedor.pontos < 2) return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+  if(vencedor.nome.includes("Raiva") && vencedor.pontos < 3) return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
+
+  return `${vencedor.nome} Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 }
 
 faceMesh.onResults(results => {
@@ -173,7 +207,7 @@ video.onloadedmetadata = () => {
 }
 iniciarCamera();
 
-// ========== FUNÇÃO ARRASTAR ==========
+// ========== ARRASTAR ==========
 function tornarArrastavel(elemento) {
   let offsetX, offsetY, isDragging = false;
   const start = (e) => {

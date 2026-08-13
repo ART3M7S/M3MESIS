@@ -23,10 +23,11 @@ window.addEventListener('resize', resize);
 resize();
 
 // ABRIR/FECHAR MENU
-btnEfeitos.addEventListener('click', () => {
-  menuAberto = !menuAberto;
-  menuEfeitos.className = menuAberto ? 'menu-aberto' : 'menu-fechado';
-  btnEfeitos.innerText = menuAberto ? 'FECHAR' : 'EFEITOS';
+btnEfeitos.addEventListener('click', (e) => {
+  if(e.target.dataset.dragging === "true") return; // não abre se estiver arrastando
+  menuAberto =!menuAberto;
+  menuEfeitos.className = menuAberto? 'menu-aberto' : 'menu-fechado';
+  btnEfeitos.innerText = menuAberto? 'FECHAR' : 'EFEITOS';
 });
 
 // APLICAR FILTRO E FECHAR MENU
@@ -43,7 +44,7 @@ botoes.forEach(btn => {
 
 // TROCAR CAMERA
 btnTrocarCamera.addEventListener('click', () => {
-  usandoCameraFrontal = !usandoCameraFrontal;
+  usandoCameraFrontal =!usandoCameraFrontal;
   iniciarCamera();
   if(usandoCameraFrontal) {
     video.style.transform = 'scaleX(-1)';
@@ -60,10 +61,10 @@ async function iniciarCamera() {
   }
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        facingMode: usandoCameraFrontal ? "user" : "environment",
-        width: 640, 
-        height: 480 
+      video: {
+        facingMode: usandoCameraFrontal? "user" : "environment",
+        width: 640,
+        height: 480
       }
     });
     video.srcObject = cameraStream;
@@ -99,18 +100,18 @@ function dist(p1, p2) {
 
 function detectarHumor(l) {
   const olhoDistancia = dist(l[33], l[263]);
-  
+
   const bocaLargura = dist(l[61], l[291]) / olhoDistancia;
   const bocaAbertura = dist(l[13], l[14]) / olhoDistancia;
   const olhoAbertura = (dist(l[159], l[145]) + dist(l[386], l[374])) / 2 / olhoDistancia;
-  
+
   // MEDIDAS PARA RAIVA
   const sobrancelhaEsq = dist(l[70], l[159]) / olhoDistancia;
   const sobrancelhaDir = dist(l[300], l[386]) / olhoDistancia;
   const sobrancelhaAltura = (sobrancelhaEsq + sobrancelhaDir) / 2;
   const sobrancelhaDistancia = dist(l[105], l[334]) / olhoDistancia;
   const pupilaTamanho = (dist(l[468], l[159]) + dist(l[473], l[386])) / 2 / olhoDistancia;
-  
+
   const bocaCantoY = (l[61].y + l[291].y) / 2;
   const bocaCentroY = (l[13].y + l[14].y) / 2;
 
@@ -161,7 +162,7 @@ faceMesh.onResults(results => {
       frameCount++;
       if (frameCount % 4 === 0) {
         const humor = detectarHumor(l);
-        if (humor !== lastHumor) {
+        if (humor!== lastHumor) {
           humorDiv.innerText = `Humor: ${humor}`;
           lastHumor = humor;
         }
@@ -179,3 +180,45 @@ video.onloadedmetadata = () => {
 }
 
 iniciarCamera();
+
+// ========== FUNÇÃO PRA DEIXAR O BOTÃO ARRASTÁVEL ==========
+function tornarArrastavel(elemento) {
+  let offsetX, offsetY, isDragging = false;
+
+  const start = (e) => {
+    isDragging = true;
+    elemento.dataset.dragging = "true";
+    const rect = elemento.getBoundingClientRect();
+    offsetX = (e.touches? e.touches[0].clientX : e.clientX) - rect.left;
+    offsetY = (e.touches? e.touches[0].clientY : e.clientY) - rect.top;
+    elemento.style.cursor = 'grabbing';
+  }
+
+  const move = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = (e.touches? e.touches[0].clientX : e.clientX) - offsetX;
+    const y = (e.touches? e.touches[0].clientY : e.clientY) - offsetY;
+    elemento.style.left = x + 'px';
+    elemento.style.right = 'auto';
+    elemento.style.top = y + 'px';
+    elemento.style.bottom = 'auto';
+  }
+
+  const end = () => {
+    setTimeout(() => elemento.dataset.dragging = "false", 100); // delay pra não abrir o menu
+    isDragging = false;
+    elemento.style.cursor = 'grab';
+  }
+
+  elemento.addEventListener('mousedown', start);
+  elemento.addEventListener('touchstart', start);
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove', move, {passive: false});
+  document.addEventListener('mouseup', end);
+  document.addEventListener('touchend', end);
+}
+
+tornarArrastavel(btnEfeitos);
+tornarArrastavel(btnTrocarCamera);
+// ========== FIM FUNÇÃO ARRASTAR ==========

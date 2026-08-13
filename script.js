@@ -63,21 +63,44 @@ async function iniciarCamera() {
 const faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
 faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 
-const PONTOS_CHAVE = [70, 63, 105, 107, 334, 336, 296, 300, 33, 133, 159, 145, 362, 263, 386, 374, 61, 291, 13, 14, 0, 468, 473];
+const PONTOS_CHAVE = [70, 63, 105, 107, 334, 336, 296, 300, 33, 133, 159, 145, 362, 263, 386, 374, 61, 291, 13, 14, 0, 468, 473, 10, 67, 152, 200, 58, 288];
 function dist(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
 
+// ========== BIOMETRIA ATUALIZADA ==========
 function atualizarBiometria(l) {
+  // 1. Tom de pele
   tomPeleSpan.innerText = "Claro/Médio";
-  const olhoSobrancelha = dist(l[159], l[70]);
-  if(olhoSobrancelha < 0.05) idadeSpan.innerText = "18-25";
-  else if(olhoSobrancelha < 0.07) idadeSpan.innerText = "26-35";
-  else idadeSpan.innerText = "36+";
-  const cores = ["Castanho", "Preto", "Mel"];
+
+  // 2. IDADE APROXIMADA - SISTEMA 3 PONTOS
+  const olhoSobrancelha = dist(l[159], l[70]); // olho caído
+  const testaRugas = dist(l[10], l[67]); // testa
+  const flacidezMandibula = dist(l[152], l[200]); // queixo
+
+  let pontosIdade = 0;
+  if(testaRugas > 0.12) pontosIdade += 2;
+  else if(testaRugas > 0.10) pontosIdade += 1;
+
+  if(olhoSobrancelha < 0.045) pontosIdade += 2;
+  else if(olhoSobrancelha < 0.06) pontosIdade += 1;
+
+  if(flacidezMandibula > 0.15) pontosIdade += 2;
+  else if(flacidezMandibula > 0.12) pontosIdade += 1;
+
+  if(pontosIdade >= 5) idadeSpan.innerText = "40+";
+  else if(pontosIdade >= 3) idadeSpan.innerText = "30-39";
+  else if(pontosIdade >= 1) idadeSpan.innerText = "22-29";
+  else idadeSpan.innerText = "16-21";
+
+  // 3. Cor dos olhos
+  const cores = ["Castanho", "Preto", "Mel", "Verde"];
   corOlhosSpan.innerText = cores[Math.floor(Math.random() * cores.length)];
+
+  // 4. Sexo
   const larguraMandibula = dist(l[58], l[288]);
-  sexoSpan.innerText = larguraMandibula > 0.15? "Masculino" : "Feminino";
+  sexoSpan.innerText = larguraMandibula > 0.16? "Masculino" : "Feminino";
 }
 
+// ========== HUMOR PRECISO 7 TIPOS ==========
 function detectarHumor(l) {
   const olhoDistancia = dist(l[33], l[263]);
   const bocaLargura = dist(l[61], l[291]) / olhoDistancia;
@@ -92,7 +115,6 @@ function detectarHumor(l) {
   const bocaCentroY = (l[13].y + l[14].y) / 2;
   const sobrancelhaInclinacao = Math.abs(l[70].y - l[300].y);
 
-  // ========== SISTEMA DE HUMOR PRECISO ==========
   let nivelRaiva = 0;
   if (sobrancelhaAltura < 0.65) nivelRaiva += 1;
   if (sobrancelhaDistancia < 0.35) nivelRaiva += 1;
@@ -102,22 +124,11 @@ function detectarHumor(l) {
   if (nivelRaiva >= 3) return `RAIVA 😡 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
   if (nivelRaiva === 2) return `Raiva Moderada 😠 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 
-  // ALEGRE: Boca larga p cima
   if (bocaLargura > 0.55 && bocaCentroY > bocaCantoY + 0.01) return `Alegre 😄 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-
-  // TRISTE: Boca fina p baixo
   if (bocaLargura < 0.42 && bocaCentroY < bocaCantoY - 0.01 && olhoAbertura < 0.19) return `Triste 😔 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-
-  // SURPRESO: Olho e boca abertos
   if (olhoAbertura > 0.22 && bocaAbertura > 0.14) return `Surpreso 😲 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-
-  // MEDO: Olho aberto + sobrancelha alta
   if (olhoAbertura > 0.24 && sobrancelhaAltura > 0.9) return `Medo 😱 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-
-  // NOJO: Boca torta/nariz franzido
   if (Math.abs(l[61].y - l[291].y) / olhoDistancia > 0.09 || sobrancelhaInclinacao > 0.02) return `Nojo 🤢 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
-
-  // CANSADO: Olho fechado
   if (olhoAbertura < 0.13) return `Cansado 😮‍💨 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
 
   return `Neutro 😐 Pupila:${(pupilaTamanho*100).toFixed(0)}`;
@@ -162,7 +173,7 @@ video.onloadedmetadata = () => {
 }
 iniciarCamera();
 
-// FUNÇÃO ARRASTAR PRA BOTÃO E PAINEL
+// ========== FUNÇÃO ARRASTAR ==========
 function tornarArrastavel(elemento) {
   let offsetX, offsetY, isDragging = false;
   const start = (e) => {
@@ -194,4 +205,4 @@ function tornarArrastavel(elemento) {
 }
 
 tornarArrastavel(btnEfeitos);
-tornarArrastavel(painelInfo); // PAINEL AGORA É ARRASTÁVEL
+tornarArrastavel(painelInfo);
